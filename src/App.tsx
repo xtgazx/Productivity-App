@@ -103,7 +103,13 @@ type FlattenedTask = Task & {
 
 type ConfirmState =
   | { type: "project"; areaId: string; projectId: string; label: string }
-  | { type: "task"; areaId: string; projectId: string; taskId: string; label: string }
+  | {
+      type: "task";
+      areaId: string;
+      projectId: string;
+      taskId: string;
+      label: string;
+    }
   | { type: "area"; areaId: string; label: string }
   | { type: "brain"; itemId: number; label: string }
   | null;
@@ -116,7 +122,7 @@ type DragState = {
   tileHeight: number;
   left: number;
   top: number;
-} | null;
+};
 
 const STORAGE_KEY = "life-dashboard-data-v1";
 
@@ -255,7 +261,9 @@ const initialAreaSeeds: AreaSeed[] = [
     color: "from-orange-100 to-yellow-50",
     summary: "Home maintenance and organization",
     preview: ["Closet cleanup", "Kitchen reset"],
-    ideas: [{ id: "home-idea-1", title: "Create a basic seasonal cleaning checklist" }],
+    ideas: [
+      { id: "home-idea-1", title: "Create a basic seasonal cleaning checklist" },
+    ],
     projects: [
       {
         id: "home-1",
@@ -370,20 +378,30 @@ const initialBrainDumpItems: DumpItem[] = [
   { id: 3, text: "Think about a simple meal planning system" },
 ];
 
-function hydrateAreas(input: Array<Partial<Area> & { id: string; name: string }>): Area[] {
+function hydrateAreas(
+  input: Array<Partial<Area> & { id: string; name: string }>
+): Area[] {
   return input.map((area) => {
     const seed = initialAreaSeeds.find((item) => item.id === area.id);
-    const iconKey = typeof area.iconKey === "string" ? area.iconKey : seed?.iconKey ?? "clipboard";
+    const iconKey =
+      typeof area.iconKey === "string" ? area.iconKey : seed?.iconKey ?? "clipboard";
+
     return {
       id: area.id,
       name: area.name,
       iconKey,
       icon: iconMap[iconKey] ?? ClipboardList,
-      color: typeof area.color === "string" ? area.color : seed?.color ?? "from-slate-100 to-zinc-50",
+      color:
+        typeof area.color === "string"
+          ? area.color
+          : seed?.color ?? "from-slate-100 to-zinc-50",
       summary: typeof area.summary === "string" ? area.summary : seed?.summary ?? "",
       preview: Array.isArray(area.preview) ? area.preview : seed?.preview ?? [],
       ideas: Array.isArray(area.ideas)
-        ? area.ideas.map((idea) => ({ id: String(idea.id), title: String(idea.title) }))
+        ? area.ideas.map((idea) => ({
+            id: String(idea.id),
+            title: String(idea.title),
+          }))
         : [],
       projects: Array.isArray(area.projects)
         ? area.projects.map((project) => ({
@@ -478,7 +496,11 @@ function AreaTile({
   isDragging: boolean;
   onOpen: () => void;
   onToggleMenu: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  onStartDrag: (clientX: number, clientY: number, element: HTMLDivElement | null) => void;
+  onStartDrag: (
+    clientX: number,
+    clientY: number,
+    element: HTMLDivElement | null
+  ) => void;
   onEditName: () => void;
   onChangeColor: () => void;
   onAddProject: () => void;
@@ -488,7 +510,10 @@ function AreaTile({
   const tileRef = useRef<HTMLDivElement | null>(null);
 
   return (
-    <div className={`relative space-y-2 overflow-visible ${isMenuOpen ? "z-50" : "z-0"}`} ref={tileRef}>
+    <div
+      className={`relative space-y-2 overflow-visible ${isMenuOpen ? "z-50" : "z-0"}`}
+      ref={tileRef}
+    >
       <motion.button
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -502,6 +527,7 @@ function AreaTile({
           <div className="rounded-2xl bg-white/80 p-2.5 shadow-sm">
             <Icon className="h-5 w-5 text-slate-700" />
           </div>
+
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -511,6 +537,7 @@ function AreaTile({
             >
               <MoreVertical className="h-4 w-4" />
             </button>
+
             <button
               type="button"
               onMouseDown={(e) => {
@@ -536,13 +563,22 @@ function AreaTile({
             className="absolute right-0 top-12 z-50 w-40 rounded-xl border border-slate-200 bg-white shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
-            <button onClick={onEditName} className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50">
+            <button
+              onClick={onEditName}
+              className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+            >
               Edit name
             </button>
-            <button onClick={onChangeColor} className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50">
+            <button
+              onClick={onChangeColor}
+              className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+            >
               Change color
             </button>
-            <button onClick={onAddProject} className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50">
+            <button
+              onClick={onAddProject}
+              className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+            >
               Add project
             </button>
             <button
@@ -563,6 +599,7 @@ function AreaTile({
 
 export default function App() {
   const [tab, setTab] = useState<TabKey>("areas");
+
   const [areas, setAreas] = useState<Area[]>(() => {
     if (typeof window === "undefined") return initialAreas;
     try {
@@ -624,7 +661,8 @@ export default function App() {
   const [ideasExpanded, setIdeasExpanded] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const saveMessageTimeoutRef = useRef<number | null>(null);
-  const [dragState, setDragState] = useState<DragState>(null);
+
+  const [dragState, setDragState] = useState<DragState | null>(null);
   const areaRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const areaColorOptions = [
@@ -649,7 +687,9 @@ export default function App() {
 
   useEffect(() => {
     return () => {
-      if (saveMessageTimeoutRef.current) window.clearTimeout(saveMessageTimeoutRef.current);
+      if (saveMessageTimeoutRef.current) {
+        window.clearTimeout(saveMessageTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -673,7 +713,9 @@ export default function App() {
 
   const showSaveMessage = (message: string) => {
     setSaveMessage(message);
-    if (saveMessageTimeoutRef.current) window.clearTimeout(saveMessageTimeoutRef.current);
+    if (saveMessageTimeoutRef.current) {
+      window.clearTimeout(saveMessageTimeoutRef.current);
+    }
     saveMessageTimeoutRef.current = window.setTimeout(() => setSaveMessage(""), 1500);
   };
 
@@ -706,11 +748,13 @@ export default function App() {
     const moveToPoint = (clientX: number, clientY: number) => {
       const nextLeft = clientX - dragState.pointerOffsetX;
       const nextTop = clientY - dragState.pointerOffsetY;
+
       setDragState((current) =>
         current ? { ...current, left: nextLeft, top: nextTop } : current
       );
 
       let targetId: string | null = null;
+
       Object.entries(areaRefs.current).forEach(([id, el]) => {
         if (!el || id === dragState.areaId) return;
         const rect = el.getBoundingClientRect();
@@ -734,7 +778,10 @@ export default function App() {
           next.splice(toIndex, 0, moved);
           return next;
         });
-        setDragState((current) => (current ? { ...current, areaId: targetId } : current));
+
+        setDragState((current) =>
+          current ? { ...current, areaId: targetId as string } : current
+        );
       }
     };
 
@@ -767,19 +814,21 @@ export default function App() {
     };
   }, [dragState]);
 
-  const allTasks = useMemo<FlattenedTask[]>(() => {
-    return areas.flatMap((area) =>
-      area.projects.flatMap((project) =>
-        project.tasks.map((task) => ({
-          ...task,
-          areaId: area.id,
-          area: area.name,
-          projectId: project.id,
-          project: project.name,
-        }))
-      )
-    );
-  }, [areas]);
+  const allTasks = useMemo<FlattenedTask[]>(
+    () =>
+      areas.flatMap((area) =>
+        area.projects.flatMap((project) =>
+          project.tasks.map((task) => ({
+            ...task,
+            areaId: area.id,
+            area: area.name,
+            projectId: project.id,
+            project: project.name,
+          }))
+        )
+      ),
+    [areas]
+  );
 
   const weeklyItems = useMemo(() => allTasks.filter((t) => t.inWeek), [allTasks]);
   const todayItems = useMemo(() => allTasks.filter((t) => t.inToday), [allTasks]);
@@ -790,7 +839,7 @@ export default function App() {
     projectId: string,
     taskId: string,
     updater: (task: Task) => Task
-  ) => {
+  ) =>
     setAreas((current) =>
       current.map((area) =>
         area.id !== areaId
@@ -810,13 +859,12 @@ export default function App() {
             }
       )
     );
-  };
 
   const updateProject = (
     areaId: string,
     projectId: string,
     updater: (project: Project) => Project
-  ) => {
+  ) =>
     setAreas((current) =>
       current.map((area) =>
         area.id !== areaId
@@ -829,7 +877,6 @@ export default function App() {
             }
       )
     );
-  };
 
   const toggleDone = (areaId: string, projectId: string, taskId: string) =>
     updateTask(areaId, projectId, taskId, (task) => ({ ...task, done: !task.done }));
@@ -854,7 +901,7 @@ export default function App() {
   const removeFromToday = (areaId: string, projectId: string, taskId: string) =>
     updateTask(areaId, projectId, taskId, (task) => ({ ...task, inToday: false }));
 
-  const deleteTask = (areaId: string, projectId: string, taskId: string) => {
+  const deleteTask = (areaId: string, projectId: string, taskId: string) =>
     setAreas((current) =>
       current.map((area) =>
         area.id !== areaId
@@ -872,7 +919,6 @@ export default function App() {
             }
       )
     );
-  };
 
   const deleteProject = (areaId: string, projectId: string) => {
     setAreas((current) =>
@@ -885,6 +931,7 @@ export default function App() {
             }
       )
     );
+
     if (selectedAreaId === areaId && selectedProjectId === projectId) {
       setSelectedProjectId(null);
     }
@@ -892,20 +939,25 @@ export default function App() {
 
   const deleteArea = (areaId: string) => {
     setAreas((current) => current.filter((area) => area.id !== areaId));
+
     if (selectedAreaId === areaId) {
       setSelectedAreaId(null);
       setSelectedProjectId(null);
     }
+
     if (editingAreaId === areaId) {
       setEditingAreaId(null);
       setEditingAreaName("");
     }
+
     if (editingAreaColorId === areaId) setEditingAreaColorId(null);
+
     if (newInlineProjectAreaId === areaId) {
       setNewInlineProjectAreaId(null);
       setInlineProjectName("");
       setInlineProjectNotes("");
     }
+
     if (areaMenuOpen === areaId) setAreaMenuOpen(null);
     if (dragState?.areaId === areaId) setDragState(null);
   };
@@ -917,10 +969,20 @@ export default function App() {
 
   const runConfirmedDelete = () => {
     if (!confirmState) return;
-    if (confirmState.type === "project") deleteProject(confirmState.areaId, confirmState.projectId);
-    if (confirmState.type === "task") deleteTask(confirmState.areaId, confirmState.projectId, confirmState.taskId);
-    if (confirmState.type === "area") deleteArea(confirmState.areaId);
-    if (confirmState.type === "brain") deleteBrainDumpItem(confirmState.itemId);
+
+    if (confirmState.type === "project") {
+      deleteProject(confirmState.areaId, confirmState.projectId);
+    }
+    if (confirmState.type === "task") {
+      deleteTask(confirmState.areaId, confirmState.projectId, confirmState.taskId);
+    }
+    if (confirmState.type === "area") {
+      deleteArea(confirmState.areaId);
+    }
+    if (confirmState.type === "brain") {
+      deleteBrainDumpItem(confirmState.itemId);
+    }
+
     setConfirmState(null);
   };
 
@@ -959,6 +1021,7 @@ export default function App() {
   const addInlineProjectToArea = (areaId: string) => {
     if (!inlineProjectName.trim()) return;
     const projectId = `${areaId}-${Date.now()}`;
+
     setAreas((current) =>
       current.map((area) =>
         area.id !== areaId
@@ -979,7 +1042,9 @@ export default function App() {
             }
       )
     );
+
     if (selectedAreaId !== areaId) setSelectedAreaId(areaId);
+
     setNewInlineProjectAreaId(null);
     setInlineProjectName("");
     setInlineProjectNotes("");
@@ -988,11 +1053,13 @@ export default function App() {
   const addIdeaToArea = (areaId: string) => {
     if (!newIdeaTitle.trim()) return;
     const idea = { id: `${areaId}-idea-${Date.now()}`, title: newIdeaTitle.trim() };
+
     setAreas((current) =>
       current.map((area) =>
         area.id !== areaId ? area : { ...area, ideas: [idea, ...area.ideas] }
       )
     );
+
     setNewIdeaTitle("");
   };
 
@@ -1029,6 +1096,7 @@ export default function App() {
           : { ...area, ideas: area.ideas.filter((idea) => idea.id !== ideaId) }
       )
     );
+
     if (editingIdeaId === ideaId) {
       setEditingIdeaId(null);
       setEditingIdeaTitle("");
@@ -1043,6 +1111,7 @@ export default function App() {
         if (area.id !== areaId) return area;
         const idea = area.ideas.find((item) => item.id === ideaId);
         if (!idea) return area;
+
         return {
           ...area,
           ideas: area.ideas.filter((item) => item.id !== ideaId),
@@ -1107,6 +1176,7 @@ export default function App() {
 
   const sendDumpToIdea = () => {
     if (!selectedDump || !dumpTargetAreaId) return;
+
     setAreas((current) =>
       current.map((area) =>
         area.id !== dumpTargetAreaId
@@ -1120,12 +1190,14 @@ export default function App() {
             }
       )
     );
+
     setBrainDumpItems((current) => current.filter((item) => item.id !== selectedDump.id));
     resetBrainDumpRouting();
   };
 
   const sendDumpToProject = () => {
     if (!selectedDump || !dumpTargetAreaId || !dumpTargetProjectId) return;
+
     setAreas((current) =>
       current.map((area) =>
         area.id !== dumpTargetAreaId
@@ -1154,13 +1226,16 @@ export default function App() {
             }
       )
     );
+
     setBrainDumpItems((current) => current.filter((item) => item.id !== selectedDump.id));
     resetBrainDumpRouting();
   };
 
   const createProjectFromDump = () => {
     if (!selectedDump || !createProjectAreaId || !createProjectName.trim()) return;
+
     const newProjectId = `${createProjectAreaId}-${Date.now()}`;
+
     setAreas((current) =>
       current.map((area) =>
         area.id !== createProjectAreaId
@@ -1191,12 +1266,14 @@ export default function App() {
             }
       )
     );
+
     setBrainDumpItems((current) => current.filter((item) => item.id !== selectedDump.id));
     resetBrainDumpRouting();
   };
 
   const addTaskToProject = () => {
     if (!selectedArea || !selectedProject || !newTaskTitle.trim()) return;
+
     updateProject(selectedArea.id, selectedProject.id, (project) => ({
       ...project,
       tasks: [
@@ -1212,13 +1289,16 @@ export default function App() {
         ...project.tasks,
       ],
     }));
+
     setNewTaskTitle("");
     setIsAddingTask(false);
   };
 
   const addArea = () => {
     if (!newAreaName.trim()) return;
+
     const id = `area-${Date.now()}`;
+
     setAreas((current) => [
       ...current,
       {
@@ -1233,6 +1313,7 @@ export default function App() {
         projects: [],
       },
     ]);
+
     setEditingAreaId(null);
     setEditingAreaName("");
     setNewAreaName("");
@@ -1256,11 +1337,21 @@ export default function App() {
   };
 
   const header = useMemo(() => {
-    if (selectedProject) return { title: selectedProject.name, subtitle: "Tasks in this project" };
-    if (selectedArea) return { title: selectedArea.name, subtitle: "Projects in this area" };
-    if (tab === "areas") return { title: "Life Dashboard", subtitle: "Areas" };
-    if (tab === "week") return { title: "This Week", subtitle: "Current focus queue" };
-    if (tab === "today") return { title: "Today", subtitle: "What matters now" };
+    if (selectedProject) {
+      return { title: selectedProject.name, subtitle: "Tasks in this project" };
+    }
+    if (selectedArea) {
+      return { title: selectedArea.name, subtitle: "Projects in this area" };
+    }
+    if (tab === "areas") {
+      return { title: "Life Dashboard", subtitle: "Areas" };
+    }
+    if (tab === "week") {
+      return { title: "This Week", subtitle: "Current focus queue" };
+    }
+    if (tab === "today") {
+      return { title: "Today", subtitle: "What matters now" };
+    }
     return { title: "Brain Dump", subtitle: "Capture first, organize later" };
   }, [selectedProject, selectedArea, tab]);
 
@@ -1284,6 +1375,7 @@ export default function App() {
                     : "Personal System"}
                 </span>
               </div>
+
               <div className="flex items-center gap-2">
                 {(selectedProject || selectedArea) && (
                   <button
@@ -1293,6 +1385,7 @@ export default function App() {
                     <ArrowLeft className="h-4 w-4" />
                   </button>
                 )}
+
                 <div>
                   <h1 className="text-lg font-semibold tracking-tight text-slate-900">
                     {header.title}
@@ -1301,6 +1394,7 @@ export default function App() {
                 </div>
               </div>
             </div>
+
             <div className="flex items-center gap-2">
               <button
                 onClick={saveChanges}
@@ -1308,7 +1402,9 @@ export default function App() {
               >
                 Save
               </button>
+
               {saveMessage && <div className="text-xs text-slate-500">{saveMessage}</div>}
+
               <button className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 shadow-sm">
                 <Bell className="h-4 w-4" />
               </button>
@@ -1327,7 +1423,11 @@ export default function App() {
 
         <div className="flex-1 overflow-y-auto px-4 pb-28 pt-4">
           {!selectedArea && !selectedProject && tab === "areas" && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
               <Card className="rounded-3xl border-slate-200 bg-white/90 shadow-xl shadow-indigo-100/50">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between gap-3">
@@ -1337,6 +1437,7 @@ export default function App() {
                         Tap a tile to open the area.
                       </CardDescription>
                     </div>
+
                     <Button
                       size="sm"
                       onClick={() => setIsNewAreaModalOpen(true)}
@@ -1346,9 +1447,11 @@ export default function App() {
                     </Button>
                   </div>
                 </CardHeader>
+
                 <CardContent className="grid grid-cols-2 gap-3">
                   {areas.map((area, i) => {
                     const isEditing = editingAreaId === area.id;
+
                     return (
                       <div
                         key={area.id}
@@ -1465,6 +1568,7 @@ export default function App() {
                     Recently completed
                   </CardTitle>
                 </CardHeader>
+
                 <CardContent className="space-y-3">
                   {completedItems.map((item) => (
                     <div
@@ -1483,7 +1587,11 @@ export default function App() {
           )}
 
           {selectedArea && !selectedProject && (
-            <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-4"
+            >
               <Card
                 className={`rounded-3xl border-slate-200 bg-gradient-to-b ${selectedArea.color} shadow-lg shadow-slate-200/50`}
               >
@@ -1497,6 +1605,7 @@ export default function App() {
                         Projects in this area
                       </CardDescription>
                     </div>
+
                     <div className="flex flex-wrap justify-end gap-2">
                       <Button
                         size="sm"
@@ -1571,6 +1680,7 @@ export default function App() {
                     />
                   </button>
                 </CardHeader>
+
                 {ideasExpanded && (
                   <CardContent className="space-y-3">
                     <div className="flex gap-2">
@@ -1789,9 +1899,15 @@ export default function App() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex flex-wrap gap-2">
-                        <MetaPill icon={Calendar} label={project.dueDate || "No due date"} />
+                        <MetaPill
+                          icon={Calendar}
+                          label={project.dueDate || "No due date"}
+                        />
                         <MetaPill icon={Circle} label={`Status: ${project.status}`} />
-                        <MetaPill icon={ListChecks} label={`${project.tasks.length} tasks`} />
+                        <MetaPill
+                          icon={ListChecks}
+                          label={`${project.tasks.length} tasks`}
+                        />
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -1816,7 +1932,11 @@ export default function App() {
           )}
 
           {selectedArea && selectedProject && (
-            <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-4"
+            >
               <Card className="rounded-3xl border-slate-200 bg-white/90 shadow-lg shadow-slate-200/50">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base text-slate-900">
@@ -1835,6 +1955,7 @@ export default function App() {
                     />
                     <MetaPill icon={Circle} label={`Status: ${selectedProject.status}`} />
                   </div>
+
                   <div className="mb-3 flex justify-end">
                     <button
                       onClick={() =>
@@ -1851,6 +1972,7 @@ export default function App() {
                       </Badge>
                     </button>
                   </div>
+
                   <div className="grid grid-cols-1 gap-2">
                     <Input
                       type="date"
@@ -1885,6 +2007,7 @@ export default function App() {
                     </Button>
                   </div>
                 </CardHeader>
+
                 <CardContent className="space-y-3">
                   {isAddingTask && (
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
@@ -1937,17 +2060,20 @@ export default function App() {
                           }`}
                         />
                       </button>
+
                       <GripVertical className="mt-1 h-4 w-4 shrink-0 text-slate-400" />
+
                       <div className="min-w-0 flex-1">
                         <div
-                          className={`${
+                          className={`break-words text-sm font-medium leading-snug ${
                             task.done
                               ? "text-slate-500 line-through decoration-slate-400"
                               : "text-slate-900"
-                          } break-words text-sm font-medium leading-snug`}
+                          }`}
                         >
                           {task.title}
                         </div>
+
                         <div className="mt-2 flex flex-wrap gap-2">
                           <button
                             onClick={() =>
@@ -1964,6 +2090,7 @@ export default function App() {
                               {task.inWeek ? "Added to This Week" : "Add to This Week"}
                             </Badge>
                           </button>
+
                           <button
                             onClick={() =>
                               addTaskToToday(selectedArea.id, selectedProject.id, task.id)
@@ -1979,11 +2106,13 @@ export default function App() {
                               {task.inToday ? "Added to Today" : "Add to Today"}
                             </Badge>
                           </button>
+
                           {task.due && (
                             <Badge className="rounded-full bg-rose-100 text-rose-700">
                               {task.due}
                             </Badge>
                           )}
+
                           <button
                             onClick={() =>
                               setConfirmState({
@@ -2000,15 +2129,18 @@ export default function App() {
                             </Badge>
                           </button>
                         </div>
+
                         <div className="mt-3 grid grid-cols-1 gap-2">
                           <Input
                             type="date"
                             value={task.due}
                             onChange={(e) =>
-                              updateTask(selectedArea.id, selectedProject.id, task.id, (t) => ({
-                                ...t,
-                                due: e.target.value,
-                              }))
+                              updateTask(
+                                selectedArea.id,
+                                selectedProject.id,
+                                task.id,
+                                (t) => ({ ...t, due: e.target.value })
+                              )
                             }
                             className="h-9 rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900"
                           />
@@ -2022,16 +2154,19 @@ export default function App() {
           )}
 
           {!selectedArea && !selectedProject && tab === "week" && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
               <Card className="rounded-3xl border-slate-200 bg-white/90 shadow-xl shadow-indigo-100/40">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base text-slate-900">
-                    Weekly queue
-                  </CardTitle>
+                  <CardTitle className="text-base text-slate-900">Weekly queue</CardTitle>
                   <CardDescription className="text-slate-600">
                     Tasks added from areas and projects
                   </CardDescription>
                 </CardHeader>
+
                 <CardContent className="space-y-3">
                   {weeklyItems.map((item) => (
                     <div
@@ -2050,7 +2185,9 @@ export default function App() {
                           }`}
                         />
                       </button>
+
                       <GripVertical className="mt-1 h-4 w-4 shrink-0 text-slate-400" />
+
                       <div className="min-w-0 flex-1">
                         <div
                           className={`text-sm font-medium break-words leading-snug ${
@@ -2061,15 +2198,18 @@ export default function App() {
                         >
                           {item.title}
                         </div>
+
                         <div className="mt-1 text-xs text-slate-500 break-words leading-snug">
                           {item.area} • {item.project}
                         </div>
+
                         <div className="mt-2 flex flex-wrap gap-2">
                           {item.due && (
                             <Badge className="rounded-full bg-rose-100 text-rose-700">
                               {item.due}
                             </Badge>
                           )}
+
                           <button
                             onClick={() =>
                               removeFromWeek(item.areaId, item.projectId, item.id)
@@ -2079,6 +2219,7 @@ export default function App() {
                               Remove from Week
                             </Badge>
                           </button>
+
                           {!item.inToday && (
                             <button
                               onClick={() =>
@@ -2100,7 +2241,11 @@ export default function App() {
           )}
 
           {!selectedArea && !selectedProject && tab === "today" && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
               <Card className="rounded-3xl border-slate-200 bg-white/90 shadow-xl shadow-emerald-100/40">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base text-slate-900">Today</CardTitle>
@@ -2108,6 +2253,7 @@ export default function App() {
                     Unlimited list, but still clean and focused
                   </CardDescription>
                 </CardHeader>
+
                 <CardContent className="space-y-3">
                   {todayItems.map((item) => (
                     <div
@@ -2126,19 +2272,22 @@ export default function App() {
                           }`}
                         />
                       </button>
+
                       <div className="min-w-0 flex-1">
                         <div
-                          className={`${
+                          className={`text-sm font-medium break-words leading-snug ${
                             item.done
                               ? "text-slate-500 line-through decoration-slate-400"
                               : "text-slate-900"
-                          } text-sm font-medium break-words leading-snug`}
+                          }`}
                         >
                           {item.title}
                         </div>
+
                         <div className="mt-1 text-xs text-slate-500 break-words leading-snug">
                           {item.area} • {item.project}
                         </div>
+
                         <div className="mt-2 flex flex-wrap gap-2">
                           <button
                             onClick={() =>
@@ -2164,8 +2313,8 @@ export default function App() {
                 </CardHeader>
                 <CardContent>
                   <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                    Completed tasks remain visible but crossed out so you can see what
-                    was finished today.
+                    Completed tasks remain visible but crossed out so you can see what was
+                    finished today.
                   </div>
                 </CardContent>
               </Card>
@@ -2173,7 +2322,11 @@ export default function App() {
           )}
 
           {!selectedArea && !selectedProject && tab === "brain" && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
               <Card className="rounded-3xl border-slate-200 bg-white/90 shadow-xl shadow-fuchsia-100/40">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base text-slate-900">Brain Dump</CardTitle>
@@ -2226,6 +2379,7 @@ export default function App() {
                       </button>
                     </div>
                   </CardHeader>
+
                   <CardContent className="space-y-4">
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-800">
                       {selectedDump.text}
@@ -2325,12 +2479,14 @@ export default function App() {
                               </option>
                             ))}
                           </select>
+
                           <Input
                             value={createProjectName}
                             onChange={(e) => setCreateProjectName(e.target.value)}
                             placeholder="New project name"
                             className="h-10 rounded-xl border-slate-200 bg-white text-slate-900"
                           />
+
                           <Button
                             onClick={createProjectFromDump}
                             disabled={!createProjectAreaId || !createProjectName.trim()}
@@ -2380,6 +2536,7 @@ export default function App() {
                       </div>
                     </div>
                   ))}
+
                   {brainDumpItems.length === 0 && (
                     <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
                       No unsorted items left.
@@ -2420,39 +2577,42 @@ export default function App() {
           </div>
         </div>
 
-        {draggedArea && dragState && (() => {
-          const DragIcon = draggedArea.icon;
-          return (
-            <div
-              className="pointer-events-none fixed z-[80]"
-              style={{
-                left: dragState.left,
-                top: dragState.top,
-                width: dragState.tileWidth,
-                height: dragState.tileHeight,
-              }}
-            >
+        {draggedArea &&
+          dragState &&
+          (() => {
+            const DragIcon = draggedArea.icon;
+
+            return (
               <div
-                className={`h-full w-full rounded-2xl border border-slate-200 bg-gradient-to-b ${draggedArea.color} p-4 shadow-2xl shadow-slate-400/30 ring-2 ring-white/80`}
+                className="pointer-events-none fixed z-[80]"
+                style={{
+                  left: dragState.left,
+                  top: dragState.top,
+                  width: dragState.tileWidth,
+                  height: dragState.tileHeight,
+                }}
               >
-                <div className="mb-3 flex items-start justify-between gap-3">
-                  <div className="rounded-2xl bg-white/85 p-2.5 shadow-sm">
-                    <DragIcon className="h-5 w-5 text-slate-700" />
+                <div
+                  className={`h-full w-full rounded-2xl border border-slate-200 bg-gradient-to-b ${draggedArea.color} p-4 shadow-2xl shadow-slate-400/30 ring-2 ring-white/80`}
+                >
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div className="rounded-2xl bg-white/85 p-2.5 shadow-sm">
+                      <DragIcon className="h-5 w-5 text-slate-700" />
+                    </div>
+                    <div className="rounded-full bg-white/85 p-2 text-slate-400 shadow-sm">
+                      <GripVertical className="h-3.5 w-3.5" />
+                    </div>
                   </div>
-                  <div className="rounded-full bg-white/85 p-2 text-slate-400 shadow-sm">
-                    <GripVertical className="h-3.5 w-3.5" />
+                  <div className="text-sm font-semibold text-slate-900">
+                    {draggedArea.name}
                   </div>
-                </div>
-                <div className="text-sm font-semibold text-slate-900">
-                  {draggedArea.name}
-                </div>
-                <div className="mt-1 text-xs text-slate-600">
-                  {draggedArea.projects.length} projects
+                  <div className="mt-1 text-xs text-slate-600">
+                    {draggedArea.projects.length} projects
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
 
         {isNewAreaModalOpen && (
           <div className="fixed inset-0 z-40 flex items-end justify-center bg-slate-900/35 px-4 pb-24 pt-8">
@@ -2476,6 +2636,7 @@ export default function App() {
                   </button>
                 </div>
               </CardHeader>
+
               <CardContent className="space-y-3">
                 <Input
                   value={newAreaName}
@@ -2483,6 +2644,7 @@ export default function App() {
                   placeholder="Area name"
                   className="h-11 rounded-xl border-slate-200 bg-white text-slate-900"
                 />
+
                 <div className="space-y-2">
                   <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
                     Color
@@ -2501,6 +2663,7 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+
                 <div className="flex gap-2">
                   <Button
                     onClick={addArea}
